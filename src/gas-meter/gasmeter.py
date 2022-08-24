@@ -45,11 +45,11 @@ while True:
 		gas_value = readActual()
 		gas_value = gas_value + 0.01
 		writeActual(gas_value)
-		seconds = 0
+		seconds = 0 # trigger send if counter changes
 	elif GPIO.input(channel) and impulse:
 		impulse = False
 	if seconds == 0:
-		sendActual()
-		seconds = 60
+		sendActual(client)
+		seconds = 60 # send once per minute
 	seconds = seconds - 1
 	time.sleep(1)
