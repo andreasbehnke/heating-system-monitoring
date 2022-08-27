@@ -7,7 +7,7 @@
 import configparser
 import logging
 import time
-from systemd.journal import JournaldLogHandler
+from systemd.journal import JournalHandler
 
 from influxdb import InfluxDBClient
 import RPi.GPIO as GPIO
@@ -57,7 +57,7 @@ GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 time.sleep(2)
 
 log = logging.getLogger('gasmeter')
-log.addHandler(JournaldLogHandler())
+log.addHandler(JournalHandler())
 log.setLevel(logging.INFO)
 
 client = InfluxDBClient(influx_host, influx_port, influx_user, influx_pass, influx_database)
