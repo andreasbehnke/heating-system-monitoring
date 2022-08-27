@@ -41,16 +41,16 @@ def send_actual():
 # read configuration
 config = configparser.ConfigParser()
 config.read('/etc/gasmeter.ini')
-count_file = config['general', 'count_file']
-measurement_delta_time = int(config['general', 'measurement_delta_time'])
-impulse_increment = config['general', 'impulse_increment']
-channel = int(config['general', 'gpio_pin'])  # connect GPIO pin to reed contact, other end of reed contact to GND.
-influx_measurement_name = config['general', 'influx_measurement_name']
-influx_port = config['general', 'influx_port']
-influx_host = config['general', 'influx_host']
-influx_user = config['general', 'influx_user']
-influx_pass = config['general', 'influx_pass']
-influx_database = config['general', 'influx_database']
+count_file = config['general']['count_file']
+measurement_delta_time = int(config['general']['measurement_delta_time'])
+impulse_increment = config['general']['impulse_increment']
+channel = int(config['general']['gpio_pin'])  # connect GPIO pin to reed contact, other end of reed contact to GND.
+influx_measurement_name = config['general']['influx_measurement_name']
+influx_port = config['general']['influx_port']
+influx_host = config['general']['influx_host']
+influx_user = config['general']['influx_user']
+influx_pass = config['general']['influx_pass']
+influx_database = config['general']['influx_database']
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
