@@ -62,4 +62,5 @@ while True:
 		seconds = seconds - 1
 		time.sleep(1)
 	except BaseException as err:
-		log.exception("exception in main")
+		log.exception("Exception in main thread, retry in 60 seconds")
+		seconds = 60
