@@ -76,7 +76,7 @@ while True:
         elif GPIO.input(channel) and impulse:
             impulse = False
         if seconds == 0:
-            send_actual(client)
+            send_actual()
             seconds = measurement_delta_time  # send at least once per delta time
         seconds = seconds - 1
         time.sleep(1)
