@@ -4,8 +4,8 @@
 #
 # Usage: gasmeter.py INFLUX_HOST INFLUX_USER_NAME INFLUX_USER_PASS INFLUX_DB_NAME
 
+import configparser
 import logging
-import sys
 import time
 from systemd.journal import JournaldLogHandler
 
@@ -14,7 +14,7 @@ import RPi.GPIO as GPIO
 
 
 def read_actual():
-    file = open('gasmeter.dat')
+    file = open(count_file)
     line = file.read()
     file.close()
     a = float(line)
@@ -22,7 +22,7 @@ def read_actual():
 
 
 def write_actual(a):
-    file = open('gasmeter.dat', 'w')
+    file = open(count_file, 'w')
     s = '{0:0.2f}'.format(a)
     file.write(s)
     file.close()
@@ -30,7 +30,7 @@ def write_actual(a):
 
 def send_actual():
     json_body = [{
-        "measurement": "heating_system_gas_meter_count",
+        "measurement": influx_measurement_name,
         "fields": {
             "value": read_actual()
         }
@@ -38,7 +38,20 @@ def send_actual():
     client.write_points(json_body)
 
 
-channel = 23  # connect GPIO 23 to reed contact, other end of reed contact to GND.
+# read configuration
+config = configparser.ConfigParser()
+config.read('/etc/gasmeter.ini')
+count_file = config['DEFAULT', 'count_file']
+measurement_delta_time = int(config['DEFAULT', 'measurement_delta_time'])
+impulse_increment = config['DEFAULT', 'impulse_increment']
+channel = int(config['DEFAULT', 'gpio_pin'])  # connect GPIO pin to reed contact, other end of reed contact to GND.
+influx_measurement_name = config['DEFAULT', 'influx_measurement_name']
+influx_port = config['DEFAULT', 'influx_port']
+influx_host = config['DEFAULT', 'influx_host']
+influx_user = config['DEFAULT', 'influx_user']
+influx_pass = config['DEFAULT', 'influx_pass']
+influx_database = config['DEFAULT', 'influx_database']
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 time.sleep(2)
@@ -47,9 +60,9 @@ log = logging.getLogger('gasmeter')
 log.addHandler(JournaldLogHandler())
 log.setLevel(logging.INFO)
 
-client = InfluxDBClient(sys.argv[1], 8086, sys.argv[2], sys.argv[3], sys.argv[4])
+client = InfluxDBClient(influx_host, influx_port, influx_user, influx_pass, influx_database)
 
-seconds = 60
+seconds = measurement_delta_time
 impulse = not GPIO.input(channel)  # retrieve the current pulse state
 
 while True:
@@ -57,16 +70,16 @@ while True:
         if not GPIO.input(channel) and not impulse:
             impulse = True  # we are now within the pulse (duration around 4 seconds, or gas meter may also stop in this position)
             gas_value = read_actual()
-            gas_value = gas_value + 0.01
+            gas_value = gas_value + impulse_increment
             write_actual(gas_value)
             seconds = 0  # trigger send if counter changes
         elif GPIO.input(channel) and impulse:
             impulse = False
         if seconds == 0:
             send_actual(client)
-            seconds = 60  # send once per minute
+            seconds = measurement_delta_time  # send at least once per delta time
         seconds = seconds - 1
         time.sleep(1)
-    except BaseException as err:
-        log.exception("Exception in main thread, retry in 60 seconds")
-        seconds = 60
+    except:
+        log.exception("Exception in main thread, retry")
+        seconds = measurement_delta_time
