@@ -4,8 +4,11 @@
 #
 # Usage: gasmeter.py INFLUX_HOST INFLUX_USER_NAME INFLUX_USER_PASS INFLUX_DB_NAME
 
+import logging
 import sys
 import time
+from systemd.journal import JournaldLogHandler
+
 from influxdb import InfluxDBClient
 import RPi.GPIO as GPIO
 
@@ -34,22 +37,29 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 time.sleep(2)
 
+log = logging.getLogger('gasmeter')
+log.addHandler(JournaldLogHandler())
+log.setLevel(logging.INFO)
+
 client = InfluxDBClient(sys.argv[1], 8086, sys.argv[2], sys.argv[3], sys.argv[4])
 
 seconds = 60
 impulse = not GPIO.input(channel) # retrieve the current pulse state
 
 while True:
-	if not GPIO.input(channel) and not impulse:
-		impulse = True # we are now within the pulse (duration around 4 seconds, or gas meter may also stop in this position)
-		gas_value = readActual()
-		gas_value = gas_value + 0.01
-		writeActual(gas_value)
-		seconds = 0 # trigger send if counter changes
-	elif GPIO.input(channel) and impulse:
-		impulse = False
-	if seconds == 0:
-		sendActual(client)
-		seconds = 60 # send once per minute
-	seconds = seconds - 1
-	time.sleep(1)
+	try:
+		if not GPIO.input(channel) and not impulse:
+			impulse = True # we are now within the pulse (duration around 4 seconds, or gas meter may also stop in this position)
+			gas_value = readActual()
+			gas_value = gas_value + 0.01
+			writeActual(gas_value)
+			seconds = 0 # trigger send if counter changes
+		elif GPIO.input(channel) and impulse:
+			impulse = False
+		if seconds == 0:
+			sendActual(client)
+			seconds = 60 # send once per minute
+		seconds = seconds - 1
+		time.sleep(1)
+	except BaseException as err:
+		log.exception("exception in main")
