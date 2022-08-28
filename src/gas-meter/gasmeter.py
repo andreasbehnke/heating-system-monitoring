@@ -1,8 +1,6 @@
 #!/usr/bin/python
-# read gas meter impulses from GPIO pin 23 and send time series data to influxdb.
-# Reed contact must switch pin 23 to GND, the internal pull up resistor will be used.
-#
-# Usage: gasmeter.py INFLUX_HOST INFLUX_USER_NAME INFLUX_USER_PASS INFLUX_DB_NAME
+# read gas meter impulses from GPIO pin 23 send time series data to influxdb.
+# Reed contact must switch pin to GND, the internal pull up resistor will be used.
 
 import configparser
 import logging
@@ -43,10 +41,10 @@ config = configparser.ConfigParser()
 config.read('/etc/gasmeter.ini')
 count_file = config['general']['count_file']
 measurement_delta_time = int(config['general']['measurement_delta_time'])
-impulse_increment = config['general']['impulse_increment']
+impulse_increment = float(config['general']['impulse_increment'])
 channel = int(config['general']['gpio_pin'])  # connect GPIO pin to reed contact, other end of reed contact to GND.
 influx_measurement_name = config['general']['influx_measurement_name']
-influx_port = config['general']['influx_port']
+influx_port = int(config['general']['influx_port'])
 influx_host = config['general']['influx_host']
 influx_user = config['general']['influx_user']
 influx_pass = config['general']['influx_pass']
