@@ -3,7 +3,7 @@ Description=gasmeter daemon
 After=syslog.target systemd-udev-settle.service
 
 [Service]
-Type=forking
+Type=exec
 ExecStart=/opt/gasmeter/gasmeter.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
