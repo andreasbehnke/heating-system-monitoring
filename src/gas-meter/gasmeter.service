@@ -1,0 +1,14 @@
+[Unit]
+Description=gasmeter daemon
+After=syslog.target systemd-udev-settle.service
+
+[Service]
+Type=forking
+ExecStart=/opt/gasmeter/gasmeter.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=120
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
