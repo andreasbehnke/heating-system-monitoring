@@ -60,7 +60,7 @@ log.setLevel(logging.INFO)
 
 client = InfluxDBClient(influx_host, influx_port, influx_user, influx_pass, influx_database)
 
-seconds = measurement_delta_time
+delta_time = measurement_delta_time
 impulse = not GPIO.input(channel)  # retrieve the current pulse state
 
 while True:
@@ -70,14 +70,14 @@ while True:
             gas_value = read_actual()
             gas_value = gas_value + impulse_increment
             write_actual(gas_value)
-            seconds = 0  # trigger send if counter changes
+            delta_time = 0  # trigger send if counter changes
         elif GPIO.input(channel) and impulse:
             impulse = False
-        if seconds == 0:
+        if delta_time == 0:
             send_actual()
-            seconds = measurement_delta_time  # send at least once per delta time
-        seconds = seconds - 1
+            delta_time = measurement_delta_time  # send at least once per delta time
+        delta_time = delta_time - 1
         time.sleep(1)
     except:
         log.exception("Exception in main thread, retry")
-        seconds = measurement_delta_time
+        delta_time = measurement_delta_time
